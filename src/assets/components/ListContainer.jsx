@@ -1,16 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TaskContainer from "./TaskContainer.jsx";
+import { format } from "date-fns";
 
 export default function ListContainer() {
   const [text, setText] = useState("");
-  const [list, setList] = useState([{ text: "kjøp melk", completed: false }]);
-  const [showCompleted, setShowCompleted] = useState(true);
+  const [list, setList] = useState(() => {
+    const storedList = localStorage.getItem("todoList");
+    return storedList ? JSON.parse(storedList) : [];
+  });
+
+  const [showCompleted, setShowCompleted] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("todoList", JSON.stringify(list));
+  }, [list]);
 
   //Updates list when item is added from add-button
   const updateList = () => {
-    setList([...list, { text: text, completed: false }]);
-    setText("");
-    console.log(list);
+    if (text.trim() !== "") {
+      setList([
+        ...list,
+        { text: text.trim(), completed: false, createdTime: new Date() },
+      ]);
+      setText("");
+      console.log(list[0].createdTime);
+    }
   };
 
   //deletes task when deletebutton is pressed.
@@ -18,6 +32,7 @@ export default function ListContainer() {
     const tempList = list.filter((_, i) => i !== index);
     setList(tempList);
   };
+
   //toggles tasks completed key to the oppositte
   const toggleCompleted = (index) => {
     const tempList = [...list];
@@ -25,18 +40,31 @@ export default function ListContainer() {
     setList(tempList);
   };
 
+  const editTask = (index, newText) => {
+    const tempList = [...list];
+    tempList[index].text = newText.trim();
+    setList(tempList);
+  };
+
   return (
     <>
       <div style={{ border: "solid white", height: " 75vh" }}>
-        <h1>todo</h1>
-        <button onClick={() => setShowCompleted(!showCompleted)}>
-          {showCompleted ? "hide completed" : "show completed"}
-        </button>
+        <h1>Todo</h1>
+        <input
+          style={{ gap: "10px" }}
+          id="checked"
+          type="checkbox"
+          onChange={() => setShowCompleted(!showCompleted)}
+        />
+        <label htmlFor="checked">Show Completed</label>
         <input
           value={text}
           type="text"
           onChange={(e) => setText(e.target.value)}
-        />{" "}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") updateList();
+          }}
+        />
         <button onClick={updateList}>add</button>
         <ul>
           {list.map((task, index) => {
@@ -48,8 +76,10 @@ export default function ListContainer() {
                 key={index}
                 text={task.text}
                 completed={task.completed}
+                createdTime={task.createdTime}
                 deleteTask={() => deleteTask(index)}
                 toggleCompleted={() => toggleCompleted(index)}
+                editTask={(newText) => editTask(index, newText)}
               />
             );
           })}

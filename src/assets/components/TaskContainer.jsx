@@ -1,16 +1,31 @@
+import { format } from "date-fns";
+import { useState } from "react";
+
 export default function TaskContainer({
   text,
   completed,
   deleteTask,
   toggleCompleted,
+  createdTime,
+  editTask,
 }) {
-  console.log(text);
-  console.log(completed);
+  const [editing, setEditing] = useState(false);
+  const [newText, setNewText] = useState(text);
+  const [isDisabled, setIsDisabled] = useState(true);
 
   return (
     <>
       <div style={{ border: "solid white", margin: "8px" }}>
-        <h3>{text}</h3>
+        <p>{format(createdTime, "dd/MM HH:mm")}</p>
+
+        <input
+          type="text"
+          value={newText}
+          disabled={isDisabled}
+          onChange={(e) => {
+            setNewText(e.target.value);
+          }}
+        />
         <input
           checked={completed}
           id="checkbox"
@@ -19,6 +34,27 @@ export default function TaskContainer({
         />
         <label htmlFor="checkbox">completed?</label>
         <button onClick={deleteTask}>delete</button>
+
+        <button
+          onClick={() => {
+            setEditing(!editing);
+            setIsDisabled(!isDisabled);
+          }}
+        >
+          Edit
+        </button>
+        {editing && (
+          <>
+            <button
+              onClick={() => {
+                editTask(newText);
+                setEditing(!editing);
+              }}
+            >
+              save
+            </button>
+          </>
+        )}
       </div>
     </>
   );
